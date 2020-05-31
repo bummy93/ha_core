@@ -100,6 +100,11 @@
         "panel": "new"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "pre_debug_task",
+      "type": "shell",
+      "command": "script/server"
     }
   ]
 }
