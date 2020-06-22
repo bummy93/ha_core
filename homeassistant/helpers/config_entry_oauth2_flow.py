@@ -297,6 +297,8 @@ def async_register_implementation(
 
     implementations = hass.data.setdefault(DATA_IMPLEMENTATIONS, {})
     implementations.setdefault(domain, {})[implementation.domain] = implementation
+    print(f"registered implementations: {implementations}")
+    print(f"hass implementation data: {hass.data[DATA_IMPLEMENTATIONS]}")
 
 
 async def async_get_implementations(
