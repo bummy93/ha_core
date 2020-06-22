@@ -38,7 +38,7 @@ from .const import (
 PLATFORMS = ["air_quality", "sensor"]
 
 DEFAULT_ATTRIBUTION = "Data provided by AirVisual"
-DEFAULT_NODE_PRO_UPDATE_INTERVAL = timedelta(minutes=1)
+DEFAULT_NODE_PRO_SCAN_INTERVAL = timedelta(minutes=1)
 DEFAULT_OPTIONS = {CONF_SHOW_ON_MAP: True}
 
 GEOGRAPHY_COORDINATES_SCHEMA = vol.Schema(
@@ -95,43 +95,27 @@ def async_get_cloud_api_update_interval(hass, api_key):
     This will shift based on the number of active consumers, thus keeping the user
     under the monthly API limit.
     """
-    num_consumers = len(async_get_cloud_coordinators_by_api_key(hass, api_key))
+    num_consumers = len(
+        {
+            config_entry
+            for config_entry in hass.config_entries.async_entries(DOMAIN)
+            if config_entry.data.get(CONF_API_KEY) == api_key
+        }
+    )
 
     # Assuming 10,000 calls per month and a "smallest possible month" of 28 days; note
     # that we give a buffer of 1500 API calls for any drift, restarts, etc.:
     minutes_between_api_calls = ceil(1 / (8500 / 28 / 24 / 60 / num_consumers))
-
-    LOGGER.debug(
-        "Leveling API key usage (%s): %s consumers, %s minutes between updates",
-        api_key,
-        num_consumers,
-        minutes_between_api_calls,
-    )
-
     return timedelta(minutes=minutes_between_api_calls)
 
 
 @callback
-def async_get_cloud_coordinators_by_api_key(hass, api_key):
-    """Get all DataUpdateCoordinator objects related to a particular API key."""
-    coordinators = []
-    for entry_id, coordinator in hass.data[DOMAIN][DATA_COORDINATOR].items():
-        config_entry = hass.config_entries.async_get_entry(entry_id)
-        if config_entry.data.get(CONF_API_KEY) == api_key:
-            coordinators.append(coordinator)
-    return coordinators
+def async_reset_coordinator_update_intervals(hass, update_interval):
+    """Update any existing data coordinators with a new update interval."""
+    if not hass.data[DOMAIN][DATA_COORDINATOR]:
+        return
 
-
-@callback
-def async_sync_geo_coordinator_update_intervals(hass, api_key):
-    """Sync the update interval for geography-based data coordinators (by API key)."""
-    update_interval = async_get_cloud_api_update_interval(hass, api_key)
-    for coordinator in async_get_cloud_coordinators_by_api_key(hass, api_key):
-        LOGGER.debug(
-            "Updating interval for coordinator: %s, %s",
-            coordinator.name,
-            update_interval,
-        )
+    for coordinator in hass.data[DOMAIN][DATA_COORDINATOR].values():
         coordinator.update_interval = update_interval
 
 
@@ -210,6 +194,10 @@ async def async_setup_entry(hass, config_entry):
 
         client = Client(api_key=config_entry.data[CONF_API_KEY], session=websession)
 
+        update_interval = async_get_cloud_api_update_interval(
+            hass, config_entry.data[CONF_API_KEY]
+        )
+
         async def async_update_data():
             """Get new data from the API."""
             if CONF_CITY in config_entry.data:
@@ -231,19 +219,14 @@ async def async_setup_entry(hass, config_entry):
         coordinator = DataUpdateCoordinator(
             hass,
             LOGGER,
-            name=async_get_geography_id(config_entry.data),
-            # We give a placeholder update interval in order to create the coordinator;
-            # then, below, we use the coordinator's presence (along with any other
-            # coordinators using the same API key) to calculate an actual, leveled
-            # update interval:
-            update_interval=timedelta(minutes=5),
+            name="geography data",
+            update_interval=update_interval,
             update_method=async_update_data,
         )
 
-        hass.data[DOMAIN][DATA_COORDINATOR][config_entry.entry_id] = coordinator
-        async_sync_geo_coordinator_update_intervals(
-            hass, config_entry.data[CONF_API_KEY]
-        )
+        # Ensure any other, existing config entries that use this API key are updated
+        # with the new scan interval:
+        async_reset_coordinator_update_intervals(hass, update_interval)
 
         # Only geography-based entries have options:
         config_entry.add_update_listener(async_update_options)

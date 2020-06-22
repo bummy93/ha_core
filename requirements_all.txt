@@ -176,9 +176,12 @@ aioharmony==0.1.13
 
 # homeassistant.components.homekit_controller
 aiohomekit[IP]==0.2.38
+<<<<<<< HEAD
 
 # homeassistant.components.ha_strava
 aiohttp==3.6.1
+=======
+>>>>>>> f897264c7f94373edca87057de2fbdda6991c48f
 
 # homeassistant.components.emulated_hue
 # homeassistant.components.http
@@ -1874,7 +1877,11 @@ rjpl==0.3.5
 rocketchat-API==0.6.1
 
 # homeassistant.components.roku
+<<<<<<< HEAD
 rokuecp==0.4.2
+=======
+rokuecp==0.4.1
+>>>>>>> f897264c7f94373edca87057de2fbdda6991c48f
 
 # homeassistant.components.roomba
 roombapy==1.6.1
