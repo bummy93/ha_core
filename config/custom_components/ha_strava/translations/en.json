@@ -1,21 +1,37 @@
 {
   "config": {
-    "abort": {
-      "authorize_url_timeout": "[%key:common::config_flow::abort::oauth2_authorize_url_timeout%]",
-      "missing_configuration": "[%key:common::config_flow::abort::oauth2_missing_configuration%]"
-    },
+    "title": "Strava Home Assistant Integration",
     "create_entry": {
-      "default": "[%key:common::config_flow::create_entry::authenticated%]"
+      "default": "Your Strava Home Assistant Integration has successfully been installed"
+    },
+    "abort": {
+      "already_configured": "A Strava Home Assistant Integration has already been installed. You can only have one installation at a time",
+      "no_public_url": "Your Home Assistant Instance does not seem to have a public URL. The Strava Home Assistant integration requires a public URL",
+      "webhook_fail": "Strava Home Assistant faild to subscribe to Strava Webhook"
     },
     "step": {
-      "pick_implementation": {
-        "title": "[%key:common::config_flow::title::oauth2_pick_implementation%]"
-      },
       "get_oauth_info": {
-        "client_id": "Client-ID",
-        "client_secret": "Client Secret"
+        "title": "Please enter your Strava API Credentials",
+        "description": "You can find more information on how to obtain your Strava API Credentials here: https://www.strava.com/settings/api",
+        "data": {
+          "client_id": "Client ID",
+          "client_secret": "Client Secret"
+        }
       }
     }
   },
-  "title": "Strava Home Assistant"
+  "options": {
+    "step": {
+      "init": {
+        "title": "Strava Home Assistant Configuration",
+        "data": {
+          "nb_activities": "Number of concurrent Strava Activities"
+        }
+      }
+    },
+    "abort": {
+      "no_config": "Could not find the Strava Home Assistant Configuration",
+      "update_success": "The Strava Home Assistant Configuration was updated successfully!"
+    }
+  }
 }
