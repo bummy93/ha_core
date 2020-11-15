@@ -1,4 +1,4 @@
 [submodule "config/custom_components/ha_strava"]
 	path = config/custom_components/ha_strava
 	url = https://github.com/codingcyclist/ha_strava.git
-	branch = dev
+	branch = dev_SB
